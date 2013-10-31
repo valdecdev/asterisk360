@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+      <record id="view_inbound_call_partner_wizard" model="ir.ui.view">
+          <field name="name">view_inbound_call_partner_wizard</field>
+          <field name="model">asterisk360.inbound.call.partner</field>
+          <field name="arch" type="xml">
+              <form string="Inbound Call" version="7.0">
+                   <group>
+                       <field name="partner_id" string="CallerMan"/>
+                       <field name="call_summary"/>
+                       <field name="call_description"/>
+                   </group>
+                   <group>
+                   </group>
+                   <footer>
+                       <button name="save_call" String="Save Call Details" type="object" class="oe_highlight"/>
+                       <button name="Cancel" class="oe_link" special="cancel"/>
+                   </footer>
+                </form>
+          </field>
+      </record>
+
+      <act_window name="Inbound Call Popup"
+          res_model="asterisk360.inbound.call.partner"
+          src_model="crm.phonecall"
+          view_mode="form"
+          target="new"
+          key2="client_action_multi"
+          id="action_inbound_call"/>
+  </data>
+</openerp>

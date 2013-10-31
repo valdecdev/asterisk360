@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2013. Tactix4
+  ~
+  ~     asterisk360_configuration_view.xml is part of asterisk360.
+  ~
+  ~     asterisk360 is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU Affero General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     (at your option) any later version.
+  ~
+  ~     asterisk360 is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU Affero General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU Affero General Public License
+  ~     along with asterisk360.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<openerp>
+    <data>
+        <record id="view_asterisk360_configuration_wizard" model="ir.ui.view">
+            <field name="name">view_asterisk360_configuration_wizard</field>
+            <field name="model">asterisk360.configuration.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Asterisk360 Configuration Helper" version="7.0">
+                    <group String="General Configuration">
+                        <field name="user_id"/>
+                        <field name="user_password" password="True"/>
+                        <group col="4" colspan="2">
+                            <field name="openerp_ip_address"/>
+                            <field name="openerp_port"/>
+                        </group>
+                        <field name="asterisk_server_id" on_change="onchange_asterisk_server_id(asterisk_server_id)"/>
+                        <group col="4" colspan="2" attrs="{'invisible':[('asterisk_port','=',0)]}">
+                            <group colspan="1">
+                            </group>
+                            <group colspan="2">
+                                <field name="websocket_server_address"/>
+                                <field name="asterisk_port"/>
+                            </group>
+                        </group>
+                    </group>
+                    <group String="AGI Script Details">
+                        <field name="agi_path"/>
+                        <field name="agi_timeout"/>
+                    </group>
+                    <group String="Screen Pop Server (WebSockets)">
+                        <field name="ws_logfile"/>
+                        <field name="ws_debug"/>
+                    </group>
+                    <footer>
+                        <button name="generate_pyasterisk" String="Generate PyAsterisk Config" type="object" class="oe_highlight"/>
+                        <button name="generate_agi_script" String="Generate Asterisk AGI Script" type="object" class="oe_highlight"/>
+                        <button name="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_asterisk360_configuration_wizard_output" model="ir.ui.view">
+            <field name="name">view_asterisk360_configuration_wizard_output</field>
+            <field name="model">asterisk360.configuration.wizard.output</field>
+            <field name="arch" type="xml">
+                <form string="Asterisk360 Configuration Output" version="7.0">
+                    <group String="Output">
+                        <field name="output" nolabel="1"/>
+                    </group>
+                    <footer>
+                        <button name="configuration_done" String="Done" type="object" class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <act_window name="Asterisk360 Configuration Helper"
+                    res_model="asterisk360.configuration.wizard"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"
+                    id="action_asterisk360_configuration"/>
+
+        <act_window name="Asterisk360 Configuration Generator"
+                    res_model="asterisk360.configuration.wizard.output"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"
+                    id="action_asterisk360_configuration_output"/>
+
+
+        <menuitem action="action_asterisk360_configuration" id="act_menu_ast_server_config" parent="asterisk_click2dial.menu_asterisk_servers" sequence="50"/>
+
+    </data>
+</openerp>

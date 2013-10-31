@@ -1,0 +1,129 @@
+#!/usr/bin/env python
+
+# -*- encoding: utf-8 -*-
+##############################################################################
+#
+#    Asterisk Screen Pop module for OpenERP
+#    Copyright (C) 2012 Les Green <l.green@valuedecision.com>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+import sys, time, socket
+from Asterisk.Manager import CoreManager
+import Asterisk.Manager, Asterisk.Util
+from callmanager.xmlrpc_timeout import TimeoutServerProxy
+from callmanager.openerp_config import OpenERPConfig
+import logging
+from logging.handlers import RotatingFileHandler
+import os
+
+class CallManager(CoreManager):
+  
+    AST_BANNERS = [
+                   'Asterisk Call Manager/1.0\r\n',
+                   'Asterisk Call Manager/1.1\r\n',
+                   'Asterisk Call Manager/1.2\r\n',
+                   'Asterisk Call Manager/1.3\r\n'
+                   ]
+    calls = {}
+  
+    def call_openerp_callend(self, call_id):
+        config = OpenERPConfig().get_openerp_connection()
+        sock = TimeoutServerProxy(config['uri'],int(config['timeout']))
+        sock.execute(config['db'], int(config['uid']), config['pwd'], 'crm.phonecall', 'case_close', [int(call_id)])
+
+    def on_Event(self, event):
+        
+        log = logging.getLogger('call_manager')
+        log.debug(event)
+        
+        eventtype = event['Event']
+        ev_uid = event['Uniqueid'] if 'Uniqueid' in event else False
+        if not ev_uid: return
+        
+        print event['Channel'] if 'Channel' in event else 'NoChannel'
+        try:
+            if eventtype=='NewCallerid':
+                call_id = self.Getvar(event['Channel'], "OPENERP_CALL_ID", "NoOpenERPCallID")
+                if call_id and not ev_uid in self.calls and not call_id =="NoOpenERPCallID": self.calls[ev_uid]=call_id
+            elif eventtype=='Hangup':
+                call_id = self.calls[ev_uid] if ev_uid in self.calls else False
+                if call_id:
+                    log.info('update callid as hungup:' + call_id)
+                    self.call_openerp_callend(call_id)  
+                    del self.calls[ev_uid]
+                else: log.info("Call Not Monitored:" + str(ev_uid))
+            else:
+                pass
+        except Asterisk.Manager.ActionFailed, e:
+            log.error(str(e))
+    
+
+def setup_logging():
+    log = logging.getLogger('call_manager')
+    log.setLevel(logging.INFO)
+    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s :: %(message)s")
+    txt_handler = RotatingFileHandler(os.path.join('/var/log/openerp',"call_manager.log"), backupCount=5)
+    txt_handler.doRollover()
+    txt_handler.setFormatter(log_formatter)
+    log.addHandler(txt_handler)
+    log.info("Logger Initialised.")
+    
+  
+def main2():
+    setup_logging()
+    log = logging.getLogger('call_manager')
+    log.info("starting...")
+    manager = CallManager(*OpenERPConfig().get_connection())
+    
+    try:
+        log.info('#' + repr(manager))
+        log.info("serving")
+        manager.serve_forever()
+    
+    except KeyboardInterrupt, e:
+        raise SystemExit
+
+def main(argv):
+    max_reconnects = 100
+    reconnect_delay = 2
+#    sys.stdout = open("/var/log/openerp/call_manager.log","a")
+#    sys.stderr = open("/var/log/openerp/call_manager_error.log","w")
+    
+    log = logging.getLogger('call_manager')
+    while True:
+        try:
+            main2()
+        except Asterisk.Manager.GoneAwayError, e:
+            log.error(str(e))
+        except socket.error, e:
+            log.error("# Connect error:")
+            log.error(str(e[1]))
+            reconnect_delay *= 2
+            
+        log.error('# Waiting' + reconnect_delay + 'seconds before reconnect.')
+        log.error('# Will try' + max_reconnects + 'more times before exit..')
+        
+        max_reconnects -= 1
+        time.sleep(reconnect_delay)
+        log.error('# Reconnecting...')
+        
+#    sys.stdout.close()
+#    sys.stderr.close()
+#    sys.stdout = sys.__stdout__
+#    sys.stderr = sys.__stderr__
+
+if __name__ == '__main__':
+    main(sys.argv[1:])    

@@ -1,0 +1,26 @@
+;
+; asterisk360 sample configuration file.
+;
+
+[py-asterisk]
+default connection=my-pbx
+default openerp=local
+default websockets=local
+
+[connection: my-pbx]
+hostname=127.0.0.1
+port=5038
+username=callevent
+secret=asterisk
+
+[openerp: local]
+server=127.0.0.1
+port=8069
+uid=8
+pwd=asterisk
+timeout=2
+db=asterisk360db
+
+[websockets: local]
+ws-server=127.0.0.1
+ws-port=9000

@@ -1,0 +1,9 @@
+.openerp .t4_asterisk360 .call_neutral {
+    background-image: url("/asterisk360/static/src/img/call.png");
+    display: block;
+    margin-top: 2px;
+    height: 16px;
+    width: 16px;
+}
+
+

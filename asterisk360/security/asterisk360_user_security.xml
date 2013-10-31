@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Asterisk360 module for OpenERP
+  Copyright (C) 2012 Les Green <l.green@valuedecision.com>
+  The licence is in the file __openerp__.py
+-->
+<openerp>
+<data noupdate="1">
+    <record id="asterisk_ami_group" model="res.groups">
+        <field name="name">Asterisk360 Call Manager AMI Group</field>
+    </record>
+    <record model="ir.ui.menu" id="menu_definitions">
+        <field name="groups_id" eval="[(6,0,[ref('asterisk_ami_group')])]"/>
+    </record>
+  </data>
+</openerp>

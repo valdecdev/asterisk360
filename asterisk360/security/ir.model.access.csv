@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_asterisk_ami_res_partner,asterisk360.res.partner user,base.model_res_partner,asterisk360.asterisk_ami_group,1,0,0,0
+access_asterisk_ami_crm_case_categ,asterisk360.crm.case.categ user,crm.model_crm_case_categ,asterisk360.asterisk_ami_group,1,0,0,0
+access_asterisk_ami_crm_phonecall,asterisk360.crm.phonecall user,crm.model_crm_phonecall,asterisk360.asterisk_ami_group,1,1,1,0

@@ -1,0 +1,230 @@
+-
+  Set up a user with a extension 1001 not logging calls
+-
+  !record {model: res.users, id: res_user_with_extension_nologcalls }:
+    name: A Test User
+    login: test_ast360_1
+    password: test_ast360_1
+    internal_number: '1001'
+    log_calls: False
+
+-
+  Set up a user with a extension 1002 who is logging calls
+-
+  !record {model: res.users, id: res_user_with_extension_logcalls }:
+    name: A Test User
+    login: test_ast360_2
+    password: test_ast360_2
+    internal_number: '1002'
+    log_calls: True
+
+-
+  Set up a partner as Company with a correctly formatted number
+-
+  !record {model: res.partner, id: res_partner_as_company }:
+    comment: A Valued Customer Company
+    customer: True
+    name: Value Decision
+    company_id: base.main_company
+    website: http://www.valuedecision.com
+    phone: '442085440335'
+    mobile: '447887998877'
+    is_company: True
+
+-
+  Set up a partner as Contact under the Company witha correctly formatted number
+-
+  !record {model: res.partner, id: res_partner_as_company_contact }:
+      comment: A Valued Customer Company - Contact
+      customer: True
+      name: Wally Wombat
+      company_id: base.main_company
+      website: http://www.valuedecision.com
+      phone: '442000000000'
+      mobile: '447887998878'
+      parent_id: res_partner_as_company
+      is_company: False
+
+-
+  Set up another partner with a whitespace phone number
+-
+   !record {model: res.partner, id: res_partner_wap_batbaby }:
+     comment: Another Valued Customer
+     customer: True
+     name: Batbaby Consulting
+     phone: '+(33) 4343 4343'
+
+-
+  Set up a user with internal_number of 1001
+-
+  !record {model: res.users, id: res_user_company_member }:
+    name: A Phone User
+    internal_number: 1001
+    login: phoneuser
+    password: phoneuser
+
+-
+  Test Caller Name
+-
+  !python {model: res.partner}: |
+    indets = {'partner_name':'Value Decision'}
+    assert(self._get_caller_name(indets)=='Value Decision'), 'Partner name not returned'
+    indets['contact_name'] = 'Andrew Snarl'
+    assert(self._get_caller_name(indets)=='Andrew Snarl (Value Decision)'), 'Partner / Contact name not returned: %s' % self._get_caller_name(indets)
+
+-
+  Call - Contact Id returned for number which exists as a res.partner (no company parent) (landline - full number passed - 44..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '442085440335','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company')),"Contact Id not found"
+
+-
+  Call - Contact Id returned for number which exists in a res.partner (no company parent) (landline - local number passed - 020..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '02085440335','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company')),"Contact Id not found"
+
+-
+  Call - Contact Id returned for number which exists in a res.partner (no company parent) (mobile - full number passed - 44..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '447887998877','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company')),"Number should exist not found"
+
+-
+  Call - Contact Id returned for number which exists in a res.partner (no company parent) (mobile - local number passed - 077..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '07887998877','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company')),"Number should exist not found"
+
+-
+  Call - Contact Id and Parent returned for number which exists in a res.partner with company parent (landline - full number passed - 44..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '442000000000','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company_contact')),"Number should exist not found - " + str(dets)
+    assert(dets['parent_id']==ref('res_partner_as_company')),"Number should exist not found - " + str(dets)
+    assert(dets['contact_name']==self.read(cr, uid, ref('res_partner_as_company_contact'),['name'])['name']),"Number should exist not found - " + str(dets)
+    assert(dets['parent_name']==self.read(cr, uid, ref('res_partner_as_company'),['name'])['name']),"Number should exist not found - " + str(dets)
+
+-
+  Call - Contact Id and Parent returned for number which exists in a res.partner with company parent (landline - local number passed - 020..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '02000000000','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company_contact')),"Number should exist not found - " + str(dets)
+    assert(dets['parent_id']==ref('res_partner_as_company')),"Number should exist not found - " + str(dets)
+    assert(dets['contact_name']==self.read(cr, uid, ref('res_partner_as_company_contact'),['name'])['name']),"Number should exist not found - " + str(dets)
+    assert(dets['parent_name']==self.read(cr, uid, ref('res_partner_as_company'),['name'])['name']),"Number should exist not found - " + str(dets)
+
+-
+  Call - Contact Id and Parent returned for number which exists in a res.partner with company parent (mobile - full number passed - 44..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '447887998878','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company_contact')),"Number should exist not found - " + str(dets)
+    assert(dets['parent_id']==ref('res_partner_as_company')),"Number should exist not found - " + str(dets)
+    assert(dets['contact_name']==self.read(cr, uid, ref('res_partner_as_company_contact'),['name'])['name']),"Number should exist not found - " + str(dets)
+    assert(dets['parent_name']==self.read(cr, uid, ref('res_partner_as_company'),['name'])['name']),"Number should exist not found - " + str(dets)
+
+-
+  Call - Conact Id and Parent returned for number which exists in a res.partner with company parent (mobile - local number passed - 077..)
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '07887998878','1001')
+    assert(dets['contact_id']==ref('res_partner_as_company_contact')),"Number should exist not found - " + str(dets)
+    assert(dets['parent_id']==ref('res_partner_as_company')),"Number should exist not found - " + str(dets)
+    assert(dets['contact_name']==self.read(cr, uid, ref('res_partner_as_company_contact'),['name'])['name']),"Number should exist not found - " + str(dets)
+    assert(dets['parent_name']==self.read(cr, uid, ref('res_partner_as_company'),['name'])['name']),"Number should exist not found - " + str(dets)
+
+-
+  Call - Inbound for a number which does not exist and call logging switched off
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '7998865','1001')
+    assert(dets=={'openerp_call_id':None, 'extension': '1001'}),"Something returned when nothing should be - " + str(dets)
+
+-
+  Call - Inbound for a number which does not exist and call logging switched on
+-
+  !python {model: res.partner}: |
+    dets = self.setup_call_inbound(cr, uid, '7998865','1002')
+    last_call_id = self.pool.get('crm.phonecall').search(cr, uid, [], limit=1, order='create_date desc')[0]
+    assert(dets=={'openerp_call_id':last_call_id, 'extension': '1002'}),"Something returned when nothing should be - " + str(dets)
+
+-
+  Call - Create inbound call for partner and check that the user is assigned correctly
+-
+  !python {model: res.partner}: |
+    number = '02085440335'
+    extension = '1002'
+    dets = self.setup_call_inbound(cr, uid, number, extension)
+    assert(dets['contact_id']==ref('res_partner_as_company')),"Contact Id not found"
+    call_id = dets['openerp_call_id']
+    assert(int(call_id)>0),"Call ID not returned"
+    calls = self.pool.get('crm.phonecall')
+    call = calls.browse(cr, uid, call_id)
+    assert(call.name=='Value Decision Inbound'), "Call name incorrect :" + str(call.name)
+    assert(call.partner_id.id==dets['contact_id']), "Partner id incorrect %s:%s" % (str(call.partner_id),dets['partner_id'])
+    assert(call.partner_phone==number), "Call number incorrect :" + str(call.partner_phone)
+    users = self.pool.get('res.users')
+    usertest =self.pool.get('res.users').search(cr, uid, [('internal_number','=',extension)])[0]
+    assert(usertest==ref('res_user_with_extension_logcalls')),"UserTest:"+str(usertest)
+    assert(call.user_id.id==usertest), "Call responsible user incorrect :" + str(call.user_id.name)
+    
+-
+  Call - Create inbound call for unknown (no partner or address)
+-
+  !python {model: res.partner}: |
+    number = '01403222222'
+    extension = '1002'
+    dets = self.setup_call_inbound(cr, uid, number, extension)
+    assert('partner_id' not in dets),"Partner Id found"
+    call_id = dets['openerp_call_id']
+    assert(int(call_id)>0),"Call ID not returned"
+    calls = self.pool.get('crm.phonecall')
+    call = calls.browse(cr, uid, call_id)
+    assert(call.name=='Unknown Inbound'), "Call name incorrect :" + str(call.name)
+    assert(call.partner_phone==number), "Call number incorrect :" + str(call.partner_phone)
+    users = self.pool.get('res.users')
+    usertest =self.pool.get('res.users').search(cr, uid, [('internal_number','=',extension)])[0]
+    assert(usertest==ref('res_user_with_extension_logcalls')),"UserTest:"+str(usertest)
+    assert(call.user_id.id==usertest), "Call responsible user incorrect :" + str(call.user_id.name)
+
+-
+  Add a partner with a valid local UK number
+-
+  !record {model: res.partner, id: res_partner_phone_uk }:
+    comment: A test on core phone
+    phone: '0208 444 3332'
+    name: Mr Valid Number NOT in France
+    company_id: base.main_company
+
+-
+  Check that a phone number does not return +33 as a default format
+-
+  !python {model: res.partner}: |
+    mr_uk = self.browse(cr, uid, ref('res_partner_phone_uk'))
+    assert(mr_uk.phone=='02084443332'), "Phone number not set to correct international number: %s" % mr_uk.phone
+
+
+-
+  Add a duplicate address for the phone number
+-
+  !record {model: res.partner, id: res_partner_phone_duplicate }:
+    comment: A Duplicate Valued Contact
+    phone: '442000000000'
+    name: Mr Duplicate
+    company_id: base.main_company
+
+#-
+#  Check that a partner overrides an address when there is a duplicate.
+#-
+#  !python {model: res.partner}: |
+#    number = '442000000000'
+#    extension = '1002'
+#    dets = self.setup_call_inbound(cr, uid, number, extension)
+#    assert(dets['contact_id']==ref('res_partner_as_company_contact')), "Duplicate gets called :%s" % dets
